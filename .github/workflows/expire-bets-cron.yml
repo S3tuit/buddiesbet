@@ -1,0 +1,18 @@
+name: Cron ‐ Expire Bets
+
+# on:
+#   schedule:
+#     - cron: "2/5 * * * *"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  expire_bets_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Next.js expire-bets endpoint
+        run: |
+          curl -s \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.CRON_URL_PROTOCOL }}://${{ secrets.CRON_URL_DOMAIN }}/api/expire-bets"
