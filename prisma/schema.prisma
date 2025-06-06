@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// AUTH
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  player Player?
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @id
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// APP
+
+model Player {
+  id                Int                @id @default(autoincrement())
+  username          String             @unique
+  rubyAmount        Float              @default(0)
+  crystalBallAmount Float              @default(100)
+  betParticipations BetParticipation[]
+  Bet               Bet[]
+  Vote              Vote[]
+  userId            String?            @unique
+  User              User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OutcomeType {
+  id          Int     @id @default(autoincrement())
+  code        Int     @unique
+  description String?
+  bets        Bet[]
+}
+
+model OddsType {
+  id          Int     @id @default(autoincrement())
+  code        Int     @unique
+  description String?
+  bets        Bet[]
+}
+
+model Bet {
+  id                Int                @id @default(autoincrement())
+  name              String
+  description       String?
+  creatorId         Int?
+  betDeadline       DateTime
+  outcomeDeadline   DateTime
+  outcomeDecided    Boolean            @default(false)
+  outcomeTypeCode   Int
+  oddsTypeCode      Int
+  password          String?
+  creator           Player?            @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  outcomeType       OutcomeType        @relation(fields: [outcomeTypeCode], references: [code])
+  oddsType          OddsType           @relation(fields: [oddsTypeCode], references: [code])
+  winningOutcomeId  Int?               @unique
+  winningOutcome    Outcome?           @relation("WinningOutcome", fields: [winningOutcomeId], references: [id])
+  outcomes          Outcome[]          @relation("BetToOutcome")
+  betParticipations BetParticipation[]
+  Vote              Vote[]
+}
+
+model Outcome {
+  id               Int                @id @default(autoincrement())
+  betId            Int
+  name             String
+  odds             Float?
+  bet              Bet                @relation("BetToOutcome", fields: [betId], references: [id], onDelete: Cascade)
+  winningBet       Bet?               @relation("WinningOutcome")
+  BetParticipation BetParticipation[]
+  votes            Vote[]
+}
+
+model Vote {
+  bet   Bet @relation(fields: [betId], references: [id], onDelete: Cascade)
+  betId Int
+
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId Int
+
+  outcome   Outcome @relation(fields: [outcomeId], references: [id], onDelete: Cascade)
+  outcomeId Int
+
+  votedAt DateTime @default(now())
+
+  @@id([betId, playerId])
+  @@index([playerId])
+}
+
+model CurrencyType {
+  id                Int                @id @default(autoincrement())
+  code              Int                @unique
+  description       String?
+  betParticipations BetParticipation[]
+}
+
+model ResultType {
+  id                Int                @id @default(autoincrement())
+  code              Int                @unique
+  description       String?
+  betParticipations BetParticipation[]
+}
+
+model BetParticipation {
+  id           Int          @id @default(autoincrement())
+  playerId     Int
+  betId        Int
+  outcomeId    Int
+  amountBet    Float
+  currencyCode Int
+  resultCode   Int
+  payout       Float?
+  createdAt    DateTime     @default(now())
+  player       Player       @relation(fields: [playerId], references: [id])
+  bet          Bet          @relation(fields: [betId], references: [id])
+  outcome      Outcome      @relation(fields: [outcomeId], references: [id])
+  currency     CurrencyType @relation(fields: [currencyCode], references: [code])
+  result       ResultType   @relation(fields: [resultCode], references: [code])
+}
