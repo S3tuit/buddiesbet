@@ -15,4 +15,4 @@ jobs:
         run: |
           curl -s \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.CRON_URL_PROTOCOL }}://${{ secrets.CRON_URL_DOMAIN }}/api/expire-bets"
+            "${{ vars.CRON_URL_PROTOCOL }}://${{ vars.CRON_URL_DOMAIN }}/api/expire-bets"
