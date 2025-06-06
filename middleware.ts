@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-const PUBLIC_PATHS = ["/", "/login"];
+const PUBLIC_PATHS = ["/", "/login", "/api/expire-bets"];
 
 export default auth((request) => {
   const { nextUrl, auth } = request;
