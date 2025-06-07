@@ -2,11 +2,10 @@
 
 import prisma from "@/lib/prisma";
 import {
-  GRACE_DAYS_DEADLINE_CROWD_WINNING_OUT,
-  GRACE_DAYS_DEADLINE_HOST_WINNING_OUT,
   OutcomeType,
+  CRON_CHANGE_OUTCOME_TYPE_MINUTES,
+  CRON_DELETE_BET_MINUTES,
 } from "../../codeTables";
-import { getDateWithGrace } from "@/lib/utils/dateUtils";
 
 /**
  * Checks if a player is allowed to participate in a bet.
@@ -82,8 +81,13 @@ export async function canHostDecideWinningOut(betId: number, playerId: number) {
   }
 
   const now = new Date();
+  // Added grace period because it can happen that the outcomeDeadline is over and the cron job to update the bet isn't started yet
+  const outcomeDeadlineWithGrace = new Date(
+    bet.outcomeDeadline.getTime() +
+      (2 + CRON_CHANGE_OUTCOME_TYPE_MINUTES) * 60 * 1000
+  );
 
-  return bet.betDeadline < now && now < bet.outcomeDeadline;
+  return bet.betDeadline < now && now < outcomeDeadlineWithGrace;
 }
 
 export async function canCrowdVote(betId: number) {
@@ -98,28 +102,19 @@ export async function canCrowdVote(betId: number) {
   });
 
   const now = new Date();
-  if (!bet || !!bet.winningOutcomeId || now < bet.betDeadline) {
+  if (
+    !bet ||
+    !!bet.winningOutcomeId ||
+    now < bet.betDeadline ||
+    bet.outcomeTypeCode !== OutcomeType.VOTE
+  ) {
     return false;
   }
 
-  const crowdDeadlineWithGracePeriod = getDateWithGrace(
-    bet.outcomeDeadline,
-    GRACE_DAYS_DEADLINE_CROWD_WINNING_OUT
+  // Added grace period because it can happen that the outcomeDeadline is over and the cron job to delete the bet isn't started yet
+  const crowdDeadlineWithGracePeriod = new Date(
+    bet.outcomeDeadline.getTime() + (2 + CRON_DELETE_BET_MINUTES) * 60 * 1000
   );
 
-  if (bet.outcomeTypeCode === OutcomeType.VOTE) {
-    if (now > crowdDeadlineWithGracePeriod) {
-      return false;
-    }
-    return true;
-  }
-
-  // If Host decides winning outcome...
-  // check if the deadline to decide the outcome is already passed
-  const deadlineWithGracePeriod = getDateWithGrace(
-    bet.outcomeDeadline,
-    GRACE_DAYS_DEADLINE_HOST_WINNING_OUT
-  );
-
-  return now >= bet.outcomeDeadline && now < deadlineWithGracePeriod;
+  return now < crowdDeadlineWithGracePeriod;
 }

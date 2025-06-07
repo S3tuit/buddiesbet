@@ -1,6 +1,6 @@
 "use server";
 
-import { Outcome, Vote } from "@/app/generated/prisma";
+import { Outcome, Vote } from "@prisma/client";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";

@@ -1,6 +1,6 @@
 "use server";
 
-import { Outcome } from "@/app/generated/prisma";
+import { Outcome } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 export async function getTotalBetAmount(betId: number): Promise<number> {

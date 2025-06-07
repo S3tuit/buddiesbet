@@ -1,11 +1,8 @@
 "use client";
 
-import { Outcome, Vote, Bet } from "@/app/generated/prisma";
+import { Outcome, Vote, Bet } from "@prisma/client";
 import { useState, useCallback } from "react";
-import {
-  GRACE_DAYS_DEADLINE_HOST_WINNING_OUT,
-  OutcomeType,
-} from "@/app/db/codeTables";
+import { OutcomeType } from "@/app/db/codeTables";
 import { getTimeLeftWithGracePeriod } from "@/lib/utils/dateUtils";
 
 import HostSetWinningOut from "./HostSetWinningOut";
@@ -36,7 +33,7 @@ export default function OutcomeDecision({
 }: OutcomeDecisionProps) {
   const [winningOutcome, setwinningOutcome] = useState(winningOutcomeFromProps);
   const [vote, setVote] = useState(voteFromProps);
-  let resolutionMethod: resolutionMethod =
+  const resolutionMethod: resolutionMethod =
     outcomeTypeCode === OutcomeType.CREATOR ? "creator" : "vote";
 
   const onSuccessHostSetWQ = useCallback(
@@ -75,35 +72,36 @@ export default function OutcomeDecision({
     } else if (timeLeftMs > 0) {
       return <WaitingOnHost timeLeftMs={timeLeftMs} />;
     } else {
-      // Host has no more time to decide winning outcome
-      resolutionMethod = "vote";
+      // Host has no more time to decide winning outcome and cron job hasn't started yet
+      return <p>Deadline is over, voting will be opened to crowd.</p>;
     }
   }
 
   // Crowd vote
   if (resolutionMethod === "vote") {
-    const timeLeftMs = getTimeLeftWithGracePeriod(
-      outcomeDeadline,
-      outcomeTypeCode === OutcomeType.CREATOR
-        ? GRACE_DAYS_DEADLINE_HOST_WINNING_OUT
-        : 0
-    );
-    if (timeLeftMs > 0) {
-      if (!vote) {
-        return (
-          <CrowdSetWinningOut
-            timeLeftMs={timeLeftMs}
-            outcomes={outcomes}
-            onSuccess={onSuccessCrowdSetWQ}
-            betId={betId}
-          />
-        );
-      } else {
-        return <p>{vote.outcome.name}</p>;
-      }
+    const timeLeftMs = getTimeLeftWithGracePeriod(outcomeDeadline, 0);
+    // Player already voted
+    if (vote) {
+      return <p>You voted: {vote.outcome.name}</p>;
+    }
+    // Player didn't vote and can vote
+    else if (timeLeftMs > 0) {
+      return (
+        <CrowdSetWinningOut
+          timeLeftMs={timeLeftMs}
+          outcomes={outcomes}
+          onSuccess={onSuccessCrowdSetWQ}
+          betId={betId}
+          isGracePeriod={false}
+        />
+      );
     }
   }
 
-  // Fallback (shouldn’t happen)
-  return null;
+  // Bet will be deleted because deadline is over
+  return (
+    <p>
+      No one voted. The bet will be deleted and the players will get a refund.
+    </p>
+  );
 }

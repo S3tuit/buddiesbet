@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect } from "react";
 import Form from "next/form";
-import { Outcome, Vote } from "@/app/generated/prisma";
+import { Outcome, Vote } from "@prisma/client";
 import { formatTimeLeftToMinutes } from "@/lib/utils/dateUtils";
 
 import {
@@ -15,6 +15,7 @@ interface CrowdSetWinningOutProps {
   outcomes: Outcome[];
   onSuccess: (newVote: Vote & { outcome: Outcome }) => void;
   betId: number;
+  isGracePeriod: boolean;
 }
 
 export default function CrowdSetWinningOut({
@@ -22,6 +23,7 @@ export default function CrowdSetWinningOut({
   outcomes,
   onSuccess,
   betId,
+  isGracePeriod,
 }: CrowdSetWinningOutProps) {
   const [selectedOutcome, setSelectedOutcome] = useState<number>(0);
   const [setCrowdVoteState, setCrowdVoteFormAction, pending] = useActionState(
@@ -39,17 +41,23 @@ export default function CrowdSetWinningOut({
     }
   }, [setCrowdVoteState]);
 
+  const headingText = isGracePeriod
+    ? "Final Chance to Vote"
+    : "Vote for the Winning Outcome";
+
+  const subText = isGracePeriod
+    ? `The Bet will be deleted in ${timeLeftString} if no one votes — last chance to act!`
+    : `Voting closes in ${timeLeftString} — majority wins!`;
+
   return (
     <Form
       action={setCrowdVoteFormAction}
       className="bg-black-800 p-6 rounded-lg shadow-lg space-y-4"
     >
       <h2 className="text-2xl font-bold text-red-500 flex items-center gap-2">
-        🗳️ Vote for the Winning Outcome
+        {headingText}
       </h2>
-      <p className="text-foreground">
-        Voting closes in {timeLeftString} — majority wins!
-      </p>
+      <p className="text-foreground">{subText}</p>
 
       <fieldset className="space-y-2">
         {outcomes.map((o) => (

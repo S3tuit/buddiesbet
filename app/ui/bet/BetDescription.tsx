@@ -1,24 +1,24 @@
-type BetPrismasAndDescProps = {
+type BetDescription = {
   totalBetted: number;
   description: string | null;
 };
 
-export default async function BetPrismasAndDesc({
+export default async function BetDescription({
   totalBetted,
   description,
-}: BetPrismasAndDescProps) {
+}: BetDescription) {
   return (
     <>
-      {/* Total prismas */}
+      {/* Total Crystal Balls */}
       <div className="flex items-center gap-4 mb-6">
-        <span className="text-4xl animate-pulse">🔴</span>
+        <span className="text-4xl animate-pulse">🔮</span>
         <span className="inline-block px-6 py-3 bg-red-200 rounded-full shadow-lg">
           <span className="text-xl font-extrabold text-red-600">
             {totalBetted}
           </span>
         </span>
         <span className="text-l font-semibold uppercase text-white tracking-wide">
-          prismas placed
+          Crystal Balls Placed
         </span>
       </div>
 
