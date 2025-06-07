@@ -1,13 +1,14 @@
 "use client";
 
-import { Bet } from "@/app/generated/prisma";
+import { Bet } from "@prisma/client";
 import { useState } from "react";
 import { OutcomeType, OddsType } from "@/app/db/codeTables";
 
 type MoreInfoOnBetProps = {
   outcomeTypeCode: Bet["outcomeTypeCode"];
   oddsTypeCode: Bet["oddsTypeCode"];
-  password: Bet["password"];
+  password: Bet["password"] | undefined;
+  isPrivate: boolean;
   isBetCreator: boolean;
 };
 
@@ -15,10 +16,10 @@ export default function MoreInfoOnBet({
   outcomeTypeCode,
   oddsTypeCode,
   password,
+  isPrivate,
   isBetCreator,
 }: MoreInfoOnBetProps) {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const isPrivate = !!password;
 
   return (
     <>

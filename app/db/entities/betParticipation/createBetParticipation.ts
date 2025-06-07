@@ -10,7 +10,7 @@ import { hasPlayerAlreadyBetted } from "./betParticipation";
 export type CreateBetParticipationState = {
   errors?: {
     outcomeId?: string[];
-    rubyBet?: string[];
+    crystalBallBet?: string[];
   };
   message?: string;
   success: boolean;
@@ -18,9 +18,9 @@ export type CreateBetParticipationState = {
 
 const createBetParticipationSchema = z.object({
   outcomeId: z.coerce.number({ required_error: "Choose an outcome" }),
-  rubyBet: z.coerce
+  crystalBallBet: z.coerce
     .number({ required_error: "Enter how much you want to bet" })
-    .min(1, { message: "You must bet at least 1 Ruby" }),
+    .min(1, { message: "You must bet at least 1 Crystal Ball" }),
 });
 
 export async function createBetParticipationFromForm(
@@ -38,7 +38,7 @@ export async function createBetParticipationFromForm(
 
   const validatedFields = createBetParticipationSchema.safeParse({
     outcomeId: formData.get("outcomeId"),
-    rubyBet: formData.get("rubyBet"),
+    crystalBallBet: formData.get("crystalBallBet"),
   });
 
   if (!validatedFields.success) {
@@ -47,7 +47,7 @@ export async function createBetParticipationFromForm(
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
-  const { outcomeId, rubyBet } = validatedFields.data;
+  const { outcomeId, crystalBallBet } = validatedFields.data;
 
   if ((await hasPlayerAlreadyBetted(betId, playerId)) === true) {
     return {
@@ -71,10 +71,10 @@ export async function createBetParticipationFromForm(
   }
 
   // Check funds
-  if (rubyBet > player.rubyAmount) {
+  if (crystalBallBet > player.crystalBallAmount) {
     return {
       success: false,
-      message: "You don't have enough Ruby to place that bet.",
+      message: "You don't have enough Crystal Balls to place that bet.",
     };
   }
 
@@ -85,8 +85,8 @@ export async function createBetParticipationFromForm(
       await tx.player.update({
         where: { id: playerId },
         data: {
-          rubyAmount: {
-            decrement: rubyBet,
+          crystalBallAmount: {
+            decrement: crystalBallBet,
           },
         },
       });
@@ -97,8 +97,8 @@ export async function createBetParticipationFromForm(
           betId: betId,
           playerId: playerId,
           outcomeId: outcomeId,
-          amountBet: rubyBet,
-          currencyCode: CurrencyType.RUBY,
+          amountBet: crystalBallBet,
+          currencyCode: CurrencyType.CRYSTAL_BALL,
           resultCode: ResultType.PENDING,
         },
       });

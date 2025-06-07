@@ -1,6 +1,6 @@
 "use client";
 
-import { Outcome } from "@/app/generated/prisma";
+import { Outcome } from "@prisma/client";
 
 interface WinningOutcomeCardProps {
   outcome: Outcome;

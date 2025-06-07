@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState, useEffect } from "react";
-import { Outcome } from "@/app/generated/prisma";
+import { Outcome } from "@prisma/client";
 import {
   winningOutcomeHostFromForm,
   WinningOutcomeHostState,

@@ -1,6 +1,6 @@
 import { notFound, unauthorized } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { Vote, Outcome } from "@/app/generated/prisma";
+import { Vote, Outcome } from "@prisma/client";
 import { auth } from "@/auth";
 import { getParticipationStatsByOutcome } from "@/app/db/entities/betParticipation/totals";
 import { getPlayerBetParticipation } from "@/app/db/entities/betParticipation/betParticipation";
@@ -11,7 +11,7 @@ import BetOutcomes from "@/app/ui/bet/BetOutcomes";
 import PlaceBetForm from "@/app/ui/bet/PlaceBetForm";
 import YourBet from "@/app/ui/bet/YourBet";
 import MoreInfoOnBet from "@/app/ui/bet/MoreInfoOnBet";
-import BetPrismasAndDesc from "@/app/ui/bet/BetPrismasAndDesc";
+import BetDescription from "@/app/ui/bet/BetDescription";
 import OutcomeDecision from "@/app/ui/bet/closed/OutcomeDecision";
 import BetTitle from "@/app/ui/bet/BetTitle";
 
@@ -97,7 +97,7 @@ export default async function BetPage({
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-black-700 py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <BetPrismasAndDesc
+          <BetDescription
             totalBetted={totalBetted}
             description={bet.description}
           />
@@ -110,7 +110,7 @@ export default async function BetPage({
               <PlaceBetForm
                 betId={bet.id}
                 outcomes={bet.outcomes}
-                maxRuby={session.player!.rubyAmount}
+                maxCrystalBalls={session.player!.crystalBallAmount}
                 password=""
               />
             ) : playerParticipation ? (
@@ -136,9 +136,8 @@ export default async function BetPage({
           <MoreInfoOnBet
             outcomeTypeCode={bet.outcomeTypeCode}
             oddsTypeCode={bet.oddsTypeCode}
-            password={
-              isHost && bet.password ? bet.password : bet.password ? "1" : null
-            }
+            password={isHost && bet.password ? bet.password : null}
+            isPrivate={!!bet.password}
             isBetCreator={playerId === bet.creatorId}
           />
         </div>

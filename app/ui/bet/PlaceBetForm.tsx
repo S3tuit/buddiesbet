@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from "react";
 import Form from "next/form";
-import { Outcome } from "@/app/generated/prisma";
+import { Outcome } from "@prisma/client";
 import {
   CreateBetParticipationState,
   createBetParticipationFromForm,
@@ -14,14 +14,14 @@ import FormError from "@/app/ui/FormError";
 interface PlaceBetFormProps {
   betId: number;
   outcomes: Outcome[];
-  maxRuby: number;
+  maxCrystalBalls: number;
   password: string;
 }
 
 export default function PlaceBetForm({
   betId,
   outcomes,
-  maxRuby,
+  maxCrystalBalls,
   password = "",
 }: PlaceBetFormProps) {
   const [selected, setSelected] = useState<number>(outcomes[0].id);
@@ -70,41 +70,44 @@ export default function PlaceBetForm({
           htmlFor="amount"
           className="block text-sm font-medium text-white mb-1"
         >
-          How many Ruby? {`you have: ${maxRuby}`}
+          How many Crystal Balls? {`you have: ${maxCrystalBalls}`}
         </label>
         <div className="flex items-center space-x-2">
           <button
             type="button"
             onClick={() =>
-              setAmount((a) => Math.min(maxRuby, Math.max(0, a - 1)))
+              setAmount((a) => Math.min(maxCrystalBalls, Math.max(0, a - 1)))
             }
             className="px-3 py-2 bg-black-700 rounded hover:bg-black-600 text-white"
           >
             –
           </button>
           <input
-            id="rubyBet"
-            name="rubyBet"
+            id="crystalBallBet"
+            name="crystalBallBet"
             type="number"
             min={0}
             value={amount}
             onChange={(e) =>
               setAmount(
-                Math.min(maxRuby, Math.max(0, parseInt(e.target.value) || 0))
+                Math.min(
+                  maxCrystalBalls,
+                  Math.max(0, parseInt(e.target.value) || 0)
+                )
               )
             }
             className="w-20 text-center px-3 py-2 bg-black-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
           />
           <button
             type="button"
-            onClick={() => setAmount((a) => Math.min(maxRuby, a + 1))}
+            onClick={() => setAmount((a) => Math.min(maxCrystalBalls, a + 1))}
             className="px-3 py-2 bg-black-700 rounded hover:bg-black-600 text-white"
           >
             +
           </button>
         </div>
       </div>
-      <FieldErrors errors={errors} field="rubyBet" />
+      <FieldErrors errors={errors} field="crystalBallBet" />
 
       {/* Submit */}
       <button

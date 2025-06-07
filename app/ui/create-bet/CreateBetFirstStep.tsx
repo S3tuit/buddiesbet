@@ -116,7 +116,7 @@ export default function CreateBetFirstStep({
       <InputField
         id="outcomeDeadline"
         name="outcomeDeadline"
-        label="When do we find out who won?"
+        label="Deadline for choosing for the winning outcome:"
         placeholder=""
         type="datetime-local"
         error={errors?.outcomeDeadline}

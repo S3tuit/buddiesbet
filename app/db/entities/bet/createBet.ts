@@ -1,10 +1,10 @@
 "use server";
 
-import { Outcome, Bet } from "@/app/generated/prisma";
+import { Outcome, Bet } from "@prisma/client";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
-import { OddsType } from "@/app/db/codeTables";
+import { BetStateType, OddsType } from "@/app/db/codeTables";
 
 export type CreateBetState = {
   errors?: {
@@ -33,9 +33,10 @@ export type OutcomeInputForm = {
 
 type OutcomeOdds = {
   name: Outcome["name"];
-  odds?: number;
+  odds: number;
 };
 
+const HOURS_3_MS = 3 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const PASSWORD_REGEX =
   /^(?:$|(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+[\]{}|;:,.<>?]).*)$/;
@@ -44,8 +45,8 @@ const createBetSchema = z
     name: z
       .string({ required_error: "Bet name is required" })
       .min(4, { message: "Please enter a bet name longer than 4 characters" })
-      .max(24, {
-        message: "Please enter a bet name shorter than 24 characters",
+      .max(150, {
+        message: "Please enter a bet name shorter than 150 characters",
       }),
     description: z
       .string()
@@ -55,8 +56,8 @@ const createBetSchema = z
       .optional(),
     betDeadline: z.coerce
       .date({ required_error: "Bet deadline is required" })
-      .refine((date) => date.getTime() >= Date.now() + ONE_DAY_MS, {
-        message: "Bet deadline must be at least 1 day from now",
+      .refine((date) => date.getTime() >= Date.now() + HOURS_3_MS, {
+        message: "Bet deadline must be at least 3 hours from now",
       }),
     outcomeDeadline: z.coerce.date({
       required_error: "An outcome deadline is required",
@@ -89,13 +90,13 @@ const createBetSchema = z
     // check outcomeDeadline ≥ betDeadline + 2 days
     if (
       data.outcomeDeadline.getTime() <
-      data.betDeadline.getTime() + 2 * ONE_DAY_MS
+      data.betDeadline.getTime() + ONE_DAY_MS
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["outcomeDeadline"],
         message:
-          "Outcome deadline must be at least 2 days after the bet deadline",
+          "Outcome deadline must be at least 1 day after the bet deadline",
       });
     }
   });
@@ -218,10 +219,10 @@ export async function createBetFromForm(
   }
 
   // Validate outcomes odds
-  let validatedOdds: OutcomeOdds[];
+  let validatedOdds;
   if (validatedFields.data.oddsTypeCode === OddsType.AUTO) {
     validatedOdds = outcomes.map((outcome) => {
-      return { name: outcome.name };
+      return { name: outcome.name, odds: null };
     });
   } else {
     validatedOdds = validateOutcomesOdds(outcomes);
@@ -251,15 +252,13 @@ export async function createBetFromForm(
         creator: { connect: { id: validatedData.creatorId } },
         outcomeType: { connect: { code: validatedData.outcomeTypeCode } },
         oddsType: { connect: { code: validatedData.oddsTypeCode } },
+        betState: { connect: { code: BetStateType.OPEN } },
         outcomes: {
           create: validatedOdds.map((outcome) => ({
             name: outcome.name,
             odds: outcome.odds,
           })),
         },
-      },
-      include: {
-        outcomes: true,
       },
     });
     return {

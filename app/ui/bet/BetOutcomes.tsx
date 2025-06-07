@@ -1,4 +1,4 @@
-import { Outcome } from "@/app/generated/prisma";
+import { Outcome } from "@prisma/client";
 import { OutcomeStats } from "@/app/db/entities/betParticipation/totals";
 
 import OutcomeList from "@/app/ui/bet/OutcomeList";
