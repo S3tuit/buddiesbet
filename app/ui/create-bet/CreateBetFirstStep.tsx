@@ -30,10 +30,7 @@ export default function CreateBetFirstStep({
 
   const addOutcome = () => {
     if (outcomes.length < 10) {
-      setOutcomes([
-        ...outcomes,
-        { id: outcomes.length + 1, name: "", probability: "", odds: "" },
-      ]);
+      setOutcomes([...outcomes, { name: "" }]);
     }
   };
 

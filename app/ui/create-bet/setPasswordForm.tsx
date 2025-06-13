@@ -67,9 +67,8 @@ export default function SetPasswordForm({
       <div className="text-gray-400 text-sm mt-4">
         <p>Password rules (simple stuff):</p>
         <ul className="list-disc list-inside">
-          <li>8 to 16 characters</li>
+          <li>6 to 16 characters</li>
           <li>At least one uppercase & one lowercase</li>
-          <li>One number & one special character</li>
         </ul>
       </div>
 

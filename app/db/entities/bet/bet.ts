@@ -6,6 +6,7 @@ import {
   CRON_CHANGE_OUTCOME_TYPE_MINUTES,
   CRON_DELETE_BET_MINUTES,
 } from "../../codeTables";
+import { decrypt } from "@/lib/password";
 
 /**
  * Checks if a player is allowed to participate in a bet.
@@ -19,13 +20,13 @@ import {
  *
  * @param betId - The ID of the bet to check.
  * @param playerId - The ID of the player attempting to bet.
- * @param password - (Optional) Password provided for password-protected bets.
+ * @param encryptedPassword - (Optional) Password provided for password-protected bets.
  * @returns `true` if the player is allowed to bet; otherwise `false`.
  */
 export async function canPlayerBet(
   betId: number,
   playerId: number,
-  password: string = ""
+  encryptedPassword: string = ""
 ) {
   const bet = await prisma.bet.findUnique({
     where: { id: betId },
@@ -38,7 +39,9 @@ export async function canPlayerBet(
   }
 
   return (
-    bet?.creatorId === playerId || !bet?.password || bet.password === password
+    bet?.creatorId === playerId ||
+    !bet?.password ||
+    bet.password === encryptedPassword
   );
 }
 
@@ -117,4 +120,20 @@ export async function canCrowdVote(betId: number) {
   );
 
   return now < crowdDeadlineWithGracePeriod;
+}
+
+// Returns the encrypted password if correct, else null
+export async function isPasswordCorrect(betId: number, plainPassword: string) {
+  const bet = await prisma.bet.findUnique({
+    where: { id: betId },
+    select: {
+      password: true,
+    },
+  });
+
+  if (bet?.password && decrypt(bet.password) === plainPassword) {
+    return bet.password;
+  } else {
+    return null;
+  }
 }

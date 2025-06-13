@@ -14,8 +14,8 @@ export default function OutcomeList({ outcome }: OutcomeListProps) {
         <span className="text-gold-500">-</span>
         <span className="flex-1 text-white">
           {outcome.name} —{" "}
-          <span className="font-semibold">{outcome.totalBets}</span> bets @{" "}
-          <span className="font-mono">{outcome.odds}</span>
+          <span className="font-semibold">{outcome.totalBets}</span> crystal
+          Balls placed @ <span className="font-mono">{outcome.odds}</span>
         </span>
       </div>
     </div>

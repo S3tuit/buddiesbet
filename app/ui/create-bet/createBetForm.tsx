@@ -11,14 +11,13 @@ import FormError from "@/app/ui/FormError";
 import CtaButton from "@/app/ui/create-bet/CtaButton";
 import SetPasswordForm from "./setPasswordForm";
 import CreateBetFirstStep from "./CreateBetFirstStep";
-import SetOddsForm from "./setOddsForm";
 import { OutcomeInputForm } from "@/app/db/entities/bet/createBet";
 
 type CreateBetFormProps = {
   onSuccessCreateBet: (betId: number) => void;
 };
 
-type CreateBetSteps = "basic" | "odds" | "password";
+type CreateBetSteps = "basic" | "password";
 
 export default function CreateBetForm({
   onSuccessCreateBet,
@@ -29,8 +28,8 @@ export default function CreateBetForm({
     { success: false } as CreateBetState
   );
   const [outcomes, setOutcomes] = useState<OutcomeInputForm[]>([
-    { id: 0, name: "", odds: "", probability: "" },
-    { id: 1, name: "", odds: "", probability: "" },
+    { name: "" },
+    { name: "" },
   ]);
 
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
@@ -41,20 +40,9 @@ export default function CreateBetForm({
   const onBackPassword = useCallback(() => {
     setBetSteps("basic");
   }, [setBetSteps]);
-  const onBackOdds = useCallback(() => {
-    if (isPrivate) {
-      setBetSteps("password");
-    } else {
-      setBetSteps("basic");
-    }
-  }, [isPrivate, setBetSteps]);
 
   const setStepPassword = useCallback(() => {
     setBetSteps("password");
-  }, [setBetSteps]);
-
-  const setStepOdds = useCallback(() => {
-    setBetSteps("odds");
   }, [setBetSteps]);
 
   const { success, errors } = createBetState;
@@ -71,8 +59,6 @@ export default function CreateBetForm({
         setBetSteps("basic");
       } else if (errors.password) {
         setBetSteps("password");
-      } else if (errors.outcomesOdds) {
-        setBetSteps("odds");
       }
     } else if (success && createBetState.data?.id) {
       onSuccessCreateBet(createBetState.data?.id);
@@ -98,13 +84,6 @@ export default function CreateBetForm({
 
       <SetPasswordForm hidden={betSteps !== "password"} errors={errors} />
 
-      <SetOddsForm
-        outcomes={outcomes}
-        hidden={betSteps !== "odds"}
-        setOutcomes={setOutcomes}
-        errors={errors}
-      />
-
       {/* BUTTTONS */}
       <div className="mt-6">
         <FormError message={!success ? createBetState.message : undefined} />
@@ -117,29 +96,11 @@ export default function CreateBetForm({
               onClicked={setStepPassword}
             />
           )}
-          {/* BASIC - SET ODDS */}
-          {betSteps === "basic" && !isPrivate && isCreatorOdds && (
-            <CtaButton
-              label="Set Odds"
-              isSubmit={false}
-              onClicked={setStepOdds}
-            />
-          )}
           {/* BASIC - SUBMIT */}
           {betSteps === "basic" && !isPrivate && !isCreatorOdds && (
             <CtaButton label="Create Your Bet" isSubmit={true} />
           )}
 
-          {/* PASSWORD - SET ODDS */}
-          {betSteps === "password" && isCreatorOdds && (
-            <CtaButton
-              label="Set Odds"
-              isSubmit={false}
-              showGoBack={true}
-              onClicked={setStepOdds}
-              onGoBack={onBackPassword}
-            />
-          )}
           {/* PASSWORD - SUBMIT */}
           {betSteps === "password" && !isCreatorOdds && (
             <CtaButton
@@ -147,16 +108,6 @@ export default function CreateBetForm({
               isSubmit={true}
               showGoBack={true}
               onGoBack={onBackPassword}
-            />
-          )}
-
-          {/* ODDS - SUBMIT BACK BASIC*/}
-          {betSteps === "odds" && (
-            <CtaButton
-              label="Create Your Bet"
-              isSubmit={true}
-              showGoBack={true}
-              onGoBack={onBackOdds}
             />
           )}
         </span>

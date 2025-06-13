@@ -2,12 +2,11 @@
 
 import { Outcome, Vote, Bet } from "@prisma/client";
 import { useState, useCallback } from "react";
-import { OutcomeType } from "@/app/db/codeTables";
+import { BetStateType, OutcomeType } from "@/app/db/codeTables";
 import { getTimeLeftWithGracePeriod } from "@/lib/utils/dateUtils";
 
 import HostSetWinningOut from "./HostSetWinningOut";
 import WaitingOnHost from "./WaitingOnHost";
-import WinningOutcomeCard from "./WinningOutcomeCard";
 import CrowdSetWinningOut from "./CrowdSetWinningOut";
 
 export interface OutcomeDecisionProps {
@@ -18,6 +17,8 @@ export interface OutcomeDecisionProps {
   betId: Bet["id"];
   winningOutcomeFromProps: Outcome | null;
   voteFromProps: (Vote & { outcome: Outcome }) | null;
+  betStateCode: Bet["betStateCode"];
+  setWinningOutcome: (o: Outcome) => void;
 }
 
 type resolutionMethod = "creator" | "vote";
@@ -28,19 +29,19 @@ export default function OutcomeDecision({
   outcomeDeadline,
   outcomes,
   betId,
-  winningOutcomeFromProps,
+  setWinningOutcome,
   voteFromProps,
+  betStateCode,
 }: OutcomeDecisionProps) {
-  const [winningOutcome, setwinningOutcome] = useState(winningOutcomeFromProps);
   const [vote, setVote] = useState(voteFromProps);
   const resolutionMethod: resolutionMethod =
     outcomeTypeCode === OutcomeType.CREATOR ? "creator" : "vote";
 
   const onSuccessHostSetWQ = useCallback(
     (newWinningOut: Outcome) => {
-      setwinningOutcome(newWinningOut);
+      setWinningOutcome(newWinningOut);
     },
-    [setwinningOutcome]
+    [setWinningOutcome]
   );
 
   const onSuccessCrowdSetWQ = useCallback(
@@ -49,11 +50,6 @@ export default function OutcomeDecision({
     },
     [setVote]
   );
-
-  // Outcome already decided
-  if (winningOutcome) {
-    return <WinningOutcomeCard outcome={winningOutcome} />;
-  }
 
   // Host decides outcome
   if (resolutionMethod === "creator") {
@@ -99,9 +95,16 @@ export default function OutcomeDecision({
   }
 
   // Bet will be deleted because deadline is over
-  return (
-    <p>
-      No one voted. The bet will be deleted and the players will get a refund.
-    </p>
-  );
+  if (betStateCode === BetStateType.DEADLINE_OVER_NO_VOTES) {
+    return (
+      <p>No one voted. This bet is canceled and the players got a refund.</p>
+    );
+  } else {
+    return (
+      <p>
+        No one voted. The bet will be canceled and the players will get a
+        refund.
+      </p>
+    );
+  }
 }
