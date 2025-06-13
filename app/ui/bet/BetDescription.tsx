@@ -1,9 +1,11 @@
+"use client";
+
 type BetDescription = {
   totalBetted: number;
   description: string | null;
 };
 
-export default async function BetDescription({
+export default function BetDescription({
   totalBetted,
   description,
 }: BetDescription) {

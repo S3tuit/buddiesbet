@@ -85,13 +85,6 @@ model OutcomeType {
   bets        Bet[]
 }
 
-model OddsType {
-  id          Int     @id @default(autoincrement())
-  code        Int     @unique
-  description String?
-  bets        Bet[]
-}
-
 model BetStateType {
   id          Int     @id @default(autoincrement())
   code        Int     @unique
@@ -107,13 +100,11 @@ model Bet {
   betDeadline       DateTime
   outcomeDeadline   DateTime
   outcomeTypeCode   Int
-  oddsTypeCode      Int
   betStateCode      Int
   password          String?
   creator           Player?            @relation(fields: [creatorId], references: [id], onDelete: SetNull)
   betState          BetStateType       @relation(fields: [betStateCode], references: [code])
   outcomeType       OutcomeType        @relation(fields: [outcomeTypeCode], references: [code])
-  oddsType          OddsType           @relation(fields: [oddsTypeCode], references: [code])
   winningOutcomeId  Int?               @unique
   winningOutcome    Outcome?           @relation("WinningOutcome", fields: [winningOutcomeId], references: [id])
   outcomes          Outcome[]          @relation("BetToOutcome")

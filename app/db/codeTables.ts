@@ -1,8 +1,3 @@
-export enum OddsType {
-  AUTO = 1,
-  CREATOR = 2,
-}
-
 export enum OutcomeType {
   CREATOR = 1,
   VOTE = 2,

@@ -2,11 +2,10 @@
 
 import { Bet } from "@prisma/client";
 import { useState } from "react";
-import { OutcomeType, OddsType } from "@/app/db/codeTables";
+import { OutcomeType } from "@/app/db/codeTables";
 
 type MoreInfoOnBetProps = {
   outcomeTypeCode: Bet["outcomeTypeCode"];
-  oddsTypeCode: Bet["oddsTypeCode"];
   password: Bet["password"] | undefined;
   isPrivate: boolean;
   isBetCreator: boolean;
@@ -14,7 +13,6 @@ type MoreInfoOnBetProps = {
 
 export default function MoreInfoOnBet({
   outcomeTypeCode,
-  oddsTypeCode,
   password,
   isPrivate,
   isBetCreator,
@@ -61,15 +59,6 @@ export default function MoreInfoOnBet({
                 {outcomeTypeCode === OutcomeType.CREATOR
                   ? "🧑‍⚖️ Host decides"
                   : "🤝 Crowd vote"}
-              </div>
-            </li>
-
-            <li className="pt-3 pb-1">
-              <div className="font-semibold text-gold-500">Odds logic</div>
-              <div>
-                {oddsTypeCode === OddsType.CREATOR
-                  ? "🎛️ Custom by host"
-                  : "🔮 Auto (fewer bets → bigger payout)"}
               </div>
             </li>
           </ul>

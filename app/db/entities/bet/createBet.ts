@@ -1,10 +1,11 @@
 "use server";
 
-import { Outcome, Bet } from "@prisma/client";
+import { Bet } from "@prisma/client";
 import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
-import { BetStateType, OddsType } from "@/app/db/codeTables";
+import { BetStateType } from "@/app/db/codeTables";
+import { encrypt, PASSWORD_REGEX } from "@/lib/password";
 
 export type CreateBetState = {
   errors?: {
@@ -13,7 +14,6 @@ export type CreateBetState = {
     betDeadline?: string[];
     outcomeDeadline?: string[];
     outcomeTypeCode?: string[];
-    oddsTypeCode?: string[];
     password?: string[];
     creatorId?: string[];
     outcomes?: string[];
@@ -25,21 +25,12 @@ export type CreateBetState = {
 };
 
 export type OutcomeInputForm = {
-  id: number;
   name: string;
-  odds: string;
-  probability: string;
-};
-
-type OutcomeOdds = {
-  name: Outcome["name"];
-  odds: number;
 };
 
 const HOURS_3_MS = 3 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const PASSWORD_REGEX =
-  /^(?:$|(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+[\]{}|;:,.<>?]).*)$/;
+
 const createBetSchema = z
   .object({
     name: z
@@ -63,7 +54,6 @@ const createBetSchema = z
       required_error: "An outcome deadline is required",
     }),
     outcomeTypeCode: z.coerce.number(),
-    oddsTypeCode: z.coerce.number(),
     password: z
       .string()
       .optional()
@@ -74,7 +64,7 @@ const createBetSchema = z
 
           // otherwise enforce length + regex
           return (
-            val.length >= 8 && val.length <= 16 && PASSWORD_REGEX.test(val)
+            val.length >= 6 && val.length <= 16 && PASSWORD_REGEX.test(val)
           );
         },
         {
@@ -104,9 +94,8 @@ const createBetSchema = z
 const OutcomeSchema = z.object({
   name: z
     .string()
-    .min(1, { message: "Name must be at least 1 character" })
-    .max(100, { message: "Name must be 100 characters or less" }),
-  odds: z.string(),
+    .min(1, { message: "Outcome name must be at least 1 character" })
+    .max(100, { message: "Outcome name must be 100 characters or less" }),
 });
 
 const OutcomesListSchema = z
@@ -132,43 +121,6 @@ function validateOutcomes(outcomes: OutcomeInputForm[]): string[] {
   return result.error.issues.map((issue) => issue.message);
 }
 
-function validateOutcomesOdds(outcomes: OutcomeInputForm[]): OutcomeOdds[] {
-  // 2) Parse name & odds, filter out invalid values
-  const data: OutcomeOdds[] = outcomes.flatMap((outcome) => {
-    const rawOdds = parseFloat(String(outcome.odds));
-    if (!isNaN(rawOdds) && rawOdds > 0) {
-      return [{ name: outcome.name, odds: rawOdds }];
-    }
-    return [];
-  });
-
-  if (data.length === 0 || data.length !== outcomes.length) {
-    return [];
-  }
-
-  // 3) Compute “raw” probabilities from the odds
-  const rawProbs = data.map((d) => 1 / d.odds);
-  const totalRaw = rawProbs.reduce((sum, p) => sum + p, 0);
-  if (totalRaw <= 0) return [];
-
-  // 4) Comput leftover
-  const normalized = rawProbs.map((p) => (p / totalRaw) * 100);
-  const floored = normalized.map((p) => Math.floor(p));
-  const sumFloored = floored.reduce((sum, p) => sum + p, 0);
-  const leftover = 100 - sumFloored;
-
-  // 4) Normalize and recompute odds
-  return data.map((outcome, i) => {
-    const finalProb =
-      i === data.length - 1 ? floored[i] + leftover : floored[i];
-    const finalOdds = 1 / (finalProb / 100);
-    return {
-      name: outcome.name,
-      odds: Number(finalOdds.toFixed(2)),
-    };
-  });
-}
-
 export async function createBetFromForm(
   prevState: CreateBetState,
   formData: FormData,
@@ -192,7 +144,6 @@ export async function createBetFromForm(
     betDeadline: formData.get("betDeadline"),
     outcomeDeadline: formData.get("outcomeDeadline"),
     outcomeTypeCode: formData.get("outcomeTypeCode"),
-    oddsTypeCode: formData.get("oddsTypeCode"),
     creatorId: session.player.id,
     password: formData.get("password"),
   });
@@ -218,27 +169,6 @@ export async function createBetFromForm(
     return { success: false, errors: { outcomes: outcomesErros } };
   }
 
-  // Validate outcomes odds
-  let validatedOdds;
-  if (validatedFields.data.oddsTypeCode === OddsType.AUTO) {
-    validatedOdds = outcomes.map((outcome) => {
-      return { name: outcome.name, odds: null };
-    });
-  } else {
-    validatedOdds = validateOutcomesOdds(outcomes);
-  }
-
-  if (validatedOdds.length === 0) {
-    return {
-      success: false,
-      errors: {
-        outcomesOdds: [
-          "Please, make sure to insert valid odds / probabilities",
-        ],
-      },
-    };
-  }
-
   const validatedData = validatedFields.data;
 
   try {
@@ -248,16 +178,12 @@ export async function createBetFromForm(
         description: validatedData.description,
         betDeadline: validatedData.betDeadline,
         outcomeDeadline: validatedData.outcomeDeadline,
-        password: isPrivate ? validatedData.password : undefined,
+        password: isPrivate ? encrypt(validatedData.password!) : undefined,
         creator: { connect: { id: validatedData.creatorId } },
         outcomeType: { connect: { code: validatedData.outcomeTypeCode } },
-        oddsType: { connect: { code: validatedData.oddsTypeCode } },
         betState: { connect: { code: BetStateType.OPEN } },
         outcomes: {
-          create: validatedOdds.map((outcome) => ({
-            name: outcome.name,
-            odds: outcome.odds,
-          })),
+          create: outcomes,
         },
       },
     });

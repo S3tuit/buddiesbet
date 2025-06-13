@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { OddsType, OutcomeType } from "@/app/db/codeTables";
+import { OutcomeType } from "@/app/db/codeTables";
 
 type NerdOptionCreateBetPros = {
   setIsPrivate: (isPrivate: boolean) => void;
@@ -90,39 +90,6 @@ export default function NerdOptionCreateBet({
                 onChange={() => SetCrowdDecides(false)}
               />
               I’ll decide (wow, they trust you this much?!)
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-white">
-            How are the odds calculated?
-          </label>
-          <div className="mt-2 space-y-2 text-white text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="oddsTypeCode"
-                value={`${OddsType.AUTO}`}
-                onChange={() => setIsCreatorOdds(false)}
-                checked={!isCreatorOdds}
-                className="form-radio"
-              />
-              Based on number of bets
-              <div className="text-gray-400 text-xs ml-6">
-                (Fewer bets on an outcome = higher payout)
-              </div>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="oddsTypeCode"
-                value={`${OddsType.CREATOR}`}
-                checked={isCreatorOdds}
-                className="form-radio"
-                onChange={() => setIsCreatorOdds(true)}
-              />
-              I’ll set custom odds (we’ll help you out)
             </label>
           </div>
         </div>

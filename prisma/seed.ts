@@ -8,11 +8,6 @@ const outcomeTypes: Prisma.OutcomeTypeCreateInput[] = [
   { code: 2, description: "Vote" },
 ];
 
-const oddsTypes: Prisma.OddsTypeCreateInput[] = [
-  { code: 1, description: "Auto" },
-  { code: 2, description: "Manual" },
-];
-
 const currencyTypes: Prisma.CurrencyTypeCreateInput[] = [
   { code: 1, description: "Crystal Ball" },
   { code: 2, description: "Ruby" },
@@ -34,15 +29,6 @@ export async function main() {
   // Seed Outcome Types
   for (const ot of outcomeTypes) {
     await prisma.outcomeType.upsert({
-      where: { code: ot.code },
-      update: {},
-      create: ot,
-    });
-  }
-
-  // Seed Odds Types
-  for (const ot of oddsTypes) {
-    await prisma.oddsType.upsert({
       where: { code: ot.code },
       update: {},
       create: ot,

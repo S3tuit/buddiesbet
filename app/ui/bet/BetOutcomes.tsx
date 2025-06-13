@@ -1,3 +1,5 @@
+"use client";
+
 import { Outcome } from "@prisma/client";
 import { OutcomeStats } from "@/app/db/entities/betParticipation/totals";
 
@@ -8,7 +10,7 @@ type BetOutcomesProps = {
   outcomesStats: OutcomeStats;
 };
 
-export default async function BetOutcomes({
+export default function BetOutcomes({
   outcomes,
   outcomesStats,
 }: BetOutcomesProps) {
@@ -22,7 +24,7 @@ export default async function BetOutcomes({
             id: o.id,
             name: o.name,
             odds: o.odds!,
-            totalBets: outcomesStats[o.id].participationCount,
+            totalBets: outcomesStats[o.id].totalBetAmount,
           }}
         />
       ))}
