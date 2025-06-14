@@ -16,7 +16,8 @@ export default function WaitingOnHost({ timeLeftMs }: WaitingOnHostProps) {
       <p className="text-foreground">
         The bet is closed, but the host hasn’t chosen the outcome yet.
         <br />
-        If nothing happens in {timeLeftString}, voting will open to everyone.
+        If outcome won’t be choosen in {timeLeftString}, voting will open to
+        everyone.
       </p>
     </div>
   );
