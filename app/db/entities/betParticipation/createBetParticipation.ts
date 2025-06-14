@@ -6,6 +6,7 @@ import { CurrencyType, ResultType } from "../../codeTables";
 import { auth } from "@/auth";
 import { canPlayerBet, doesOutcomeBelogToBet } from "../bet/bet";
 import { hasPlayerAlreadyBetted } from "./betParticipation";
+import { BetParticipation, Outcome } from "@prisma/client";
 
 export type CreateBetParticipationState = {
   errors?: {
@@ -14,6 +15,7 @@ export type CreateBetParticipationState = {
   };
   message?: string;
   success: boolean;
+  data?: BetParticipation & { outcome: Outcome };
 };
 
 const createBetParticipationSchema = z.object({
@@ -92,19 +94,22 @@ export async function createBetParticipationFromForm(
       });
 
       // Create the participation
-      await tx.betParticipation.create({
+      const betParticipation = await tx.betParticipation.create({
         data: {
-          betId: betId,
-          playerId: playerId,
-          outcomeId: outcomeId,
+          betId,
+          playerId,
+          outcomeId,
           amountBet: crystalBallBet,
           currencyCode: CurrencyType.CRYSTAL_BALL,
           resultCode: ResultType.PENDING,
         },
+        include: {
+          outcome: true,
+        },
       });
 
       // Success!
-      return { success: true };
+      return { success: true, data: betParticipation };
     });
   } catch (error) {
     console.error(error);

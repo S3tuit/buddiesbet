@@ -29,7 +29,9 @@ export type OutcomeInputForm = {
 };
 
 const HOURS_3_MS = 3 * 60 * 60 * 1000;
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const TWO_WEEKS_MS = 14 * ONE_DAY_MS;
 
 const createBetSchema = z
   .object({
@@ -49,6 +51,9 @@ const createBetSchema = z
       .date({ required_error: "Bet deadline is required" })
       .refine((date) => date.getTime() >= Date.now() + HOURS_3_MS, {
         message: "Bet deadline must be at least 3 hours from now",
+      })
+      .refine((date) => date.getTime() <= Date.now() + ONE_MONTH_MS, {
+        message: "Bet deadline must be at most 1 month from now",
       }),
     outcomeDeadline: z.coerce.date({
       required_error: "An outcome deadline is required",
@@ -77,16 +82,26 @@ const createBetSchema = z
     }),
   })
   .superRefine((data, ctx) => {
-    // check outcomeDeadline ≥ betDeadline + 2 days
-    if (
-      data.outcomeDeadline.getTime() <
-      data.betDeadline.getTime() + ONE_DAY_MS
-    ) {
+    const betTs = data.betDeadline.getTime();
+    const outcomeTs = data.outcomeDeadline.getTime();
+
+    // 1) must be at least 1 day after betDeadline
+    if (outcomeTs < betTs + ONE_DAY_MS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["outcomeDeadline"],
         message:
           "Outcome deadline must be at least 1 day after the bet deadline",
+      });
+    }
+
+    // 2) must be no more than 2 weeks after betDeadline
+    if (outcomeTs > betTs + TWO_WEEKS_MS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["outcomeDeadline"],
+        message:
+          "Outcome deadline must be at most 2 weeks after the bet deadline",
       });
     }
   });

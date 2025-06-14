@@ -1,7 +1,7 @@
 "use client";
 
 import { Bet, BetParticipation, Outcome, Vote } from "@prisma/client";
-import { OutcomeStats } from "@/app/db/entities/betParticipation/totals";
+import { OutcomesStats } from "@/app/db/entities/betParticipation/totals";
 
 import BetDescription from "./BetDescription";
 import BetOutcomes from "./BetOutcomes";
@@ -16,8 +16,10 @@ type BetInfoProps = {
   totalBetted: number;
   winningOutcomeFromProps: Outcome | null;
   outcomes: Outcome[];
-  outcomesStats: OutcomeStats;
-  playerParticipation: (BetParticipation & { outcome: Outcome }) | null;
+  outcomesStatsFromProps: OutcomesStats;
+  playerParticipationFromProps:
+    | (BetParticipation & { outcome: Outcome })
+    | null;
   maxCrystalBalls: number;
   isHost: boolean;
   vote: (Vote & { outcome: Outcome }) | null;
@@ -30,8 +32,8 @@ export default function BetInfo({
   totalBetted,
   winningOutcomeFromProps,
   outcomes,
-  outcomesStats,
-  playerParticipation,
+  outcomesStatsFromProps,
+  playerParticipationFromProps,
   maxCrystalBalls,
   isHost,
   vote,
@@ -41,6 +43,13 @@ export default function BetInfo({
   const [winningOutcome, setWinningOutcome] = useState<Outcome | null>(
     winningOutcomeFromProps
   );
+  const [outcomesStats, setOutcomesStats] = useState<OutcomesStats>(
+    outcomesStatsFromProps
+  );
+  const [playerParticipation, setPlayerParticipation] = useState(
+    playerParticipationFromProps
+  );
+
   return (
     <div className="bg-black-700 py-8 px-4 shadow sm:rounded-lg sm:px-10">
       <BetDescription totalBetted={totalBetted} description={bet.description} />
@@ -55,6 +64,8 @@ export default function BetInfo({
             outcomes={outcomes}
             maxCrystalBalls={maxCrystalBalls}
             password={passwordByPlayer}
+            setOutcomesStats={setOutcomesStats}
+            setPlayerParticipation={setPlayerParticipation}
           />
         ) : playerParticipation ? (
           // User already placed a bet
@@ -71,7 +82,7 @@ export default function BetInfo({
       )}
 
       <section className="border-1 my-4 mb-4 border-gray-500">
-        {closed && playerParticipation && (
+        {closed && playerParticipation && !winningOutcome && (
           <OutcomeDecision
             isHost={isHost}
             outcomeTypeCode={bet.outcomeTypeCode}

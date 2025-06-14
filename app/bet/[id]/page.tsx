@@ -53,25 +53,24 @@ export default async function BetPage({
     (sum, { totalBetAmount }) => sum + totalBetAmount,
     0
   );
+  const n = Object.keys(outcomesStats).length;
 
-  const n = bet.outcomes.length;
+  for (const key of Object.keys(outcomesStats)) {
+    const outcomeId = Number(key);
+    const o = outcomesStats[outcomeId];
 
-  bet.outcomes = bet.outcomes.map((outcome) => {
-    const stats = outcomesStats[outcome.id];
-
-    //    If nobody bet anything yet, fall back to even odds (1/n)
+    // If nobody bet anything yet, fall back to even odds (1/n)
     const probability =
-      totalBetted > 0 ? stats.totalBetAmount / totalBetted : 1 / n;
+      totalBetted > 0 ? o.totalBetAmount / totalBetted : 1 / n;
     let rawOdds = 1 / probability;
-
     if (rawOdds < 1.01) rawOdds = 1.01;
     if (rawOdds > 99) rawOdds = 99;
 
-    return {
-      ...outcome,
+    outcomesStats[outcomeId] = {
+      ...o,
       odds: parseFloat(rawOdds.toFixed(2)),
     };
-  });
+  }
 
   // 5) Check if bet closed
   const now = new Date();
@@ -108,8 +107,8 @@ export default async function BetPage({
           totalBetted={totalBetted}
           winningOutcomeFromProps={bet.winningOutcome}
           outcomes={bet.outcomes}
-          outcomesStats={outcomesStats}
-          playerParticipation={playerParticipation}
+          outcomesStatsFromProps={outcomesStats}
+          playerParticipationFromProps={playerParticipation}
           maxCrystalBalls={session.player!.crystalBallAmount}
           isHost={isHost}
           vote={vote}

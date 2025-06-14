@@ -13,9 +13,9 @@ export async function getTotalBetAmount(betId: number): Promise<number> {
   return result._sum.amountBet ?? 0;
 }
 
-export type OutcomeStats = Record<
+export type OutcomesStats = Record<
   number,
-  { totalBetAmount: number; participationCount: number }
+  { totalBetAmount: number; participationCount: number; odds: number }
 >;
 
 /**
@@ -25,7 +25,7 @@ export type OutcomeStats = Record<
  */
 export async function getParticipationStatsByOutcome(
   outcomes: Outcome[]
-): Promise<OutcomeStats> {
+): Promise<OutcomesStats> {
   const outcomeIds = outcomes.map((o) => o.id);
 
   // Group by outcomeId, computing both sum and count in one query
@@ -37,11 +37,12 @@ export async function getParticipationStatsByOutcome(
   });
 
   // Build a result map, defaulting to zero
-  const result: OutcomeStats = {};
+  const result: OutcomesStats = {};
   for (const id of outcomeIds) {
     result[id] = {
       totalBetAmount: 0,
       participationCount: 0,
+      odds: 0,
     };
   }
 
@@ -49,6 +50,7 @@ export async function getParticipationStatsByOutcome(
     result[entry.outcomeId] = {
       totalBetAmount: entry._sum.amountBet ?? 0,
       participationCount: entry._count._all,
+      odds: 0,
     };
   }
 
